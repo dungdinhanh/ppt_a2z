@@ -1,0 +1,15 @@
+accelerate
+controlnet-aux==0.0.3
+diffusers==0.27.0
+gradio==3.41.0
+opencv-python
+transformers==4.28.0
+huggingface-hub==0.23.4
+pytorch-lightning==2.5.1
+omegaconf
+webdataset
+torch==2.3.1+cu118
+torchvision==0.18.1+cu118
+torchaudio==2.3.1+cu118
+mmengine
+--extra-index-url https://download.pytorch.org/whl/cu118
