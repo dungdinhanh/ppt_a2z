@@ -7,7 +7,7 @@ output
 .venv/
 mlruns/
 data/
-
+.vscode/
 *.pth
 *.pt
 *.pkl
