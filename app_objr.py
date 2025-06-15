@@ -311,6 +311,9 @@ class PowerPaintController:
                 prompt = prompt + " empty scene"
             if task == "object-removal":
                 prompt = prompt + " empty scene blur"
+        print("Get prompt")
+        print(prompt)
+
         promptA, promptB, negative_promptA, negative_promptB = add_task(prompt, negative_prompt, task, self.version)
         print(promptA, promptB, negative_promptA, negative_promptB)
 
@@ -495,8 +498,6 @@ class PowerPaintController:
         control_type="canny",
         controlnet_conditioning_scale=None,
     ):
-        input_image['image'].save("input.png")
-        input_image['mask'].save("mask.png")
         if task == "text-guided":
             prompt = text_guided_prompt
             negative_prompt = text_guided_negative_prompt
@@ -540,8 +541,38 @@ class PowerPaintController:
                 controlnet_conditioning_scale,
             )
         else:
-            output =  self.predict(
+            return self.predict(
                 input_image, prompt, fitting_degree, ddim_steps, scale, seed, negative_prompt, task, None, None
+            )
+
+    def infer_objr(
+            self,
+            input_image,
+            removal_prompt,
+            removal_negative_prompt,
+            ddim_steps,
+            scale,
+            seed,
+        ):
+            task = "object-removal"
+            prompt = removal_prompt
+            negative_prompt = removal_negative_prompt
+            fitting_degree = 1.0  # Default/fixed since not relevant for object-removal
+
+            input_image
+            input_image['image'].save("input.png")
+            input_image['mask'].save("mask.png")
+            output= self.predict(
+                input_image,
+                prompt,
+                fitting_degree,
+                ddim_steps,
+                scale,
+                seed,
+                negative_prompt,
+                task,
+                None,  # vertical_expansion_ratio
+                None,  # horizontal_expansion_ratio
             )
             print(output)
             output[0][0].save("test1.png")
@@ -556,136 +587,48 @@ if __name__ == "__main__":
     args.add_argument("--checkpoint_dir", type=str, default="./checkpoints/ppt-v1")
     args.add_argument("--version", type=str, default="ppt-v1")
     args.add_argument("--share", action="store_true")
-    args.add_argument(
-        "--local_files_only", action="store_true", help="enable it to use cached files without requesting from the hub"
-    )
+    args.add_argument("--local_files_only", action="store_true", help="Use cached files without requesting from the hub")
     args.add_argument("--port", type=int, default=7860)
     args = args.parse_args()
 
-    # initialize the pipeline controller
+    # Initialize controller
     weight_dtype = torch.float16 if args.weight_dtype == "float16" else torch.float32
     controller = PowerPaintController(weight_dtype, args.checkpoint_dir, args.local_files_only, args.version)
 
-    # ui
+    # UI definition
     with gr.Blocks(css="style.css") as demo:
         with gr.Row():
-            gr.Markdown(
-                "<div align='center'><font size='18'>PowerPaint: High-Quality Versatile Image Inpainting</font></div>"  # noqa
-            )
+            gr.Markdown("""
+            <div align='center'><font size='18'>PowerPaint: Object Removal Inpainting</font></div>
+            """)
+
         with gr.Row():
-            gr.Markdown(
-                "<div align='center'><font size='5'><a href='https://powerpaint.github.io/'>Project Page</a> &ensp;"  # noqa
-                "<a href='https://arxiv.org/abs/2312.03594/'>Paper</a> &ensp;"
-                "<a href='https://github.com/open-mmlab/powerpaint'>Code</a> </font></div>"  # noqa
-            )
-        with gr.Row():
-            gr.Markdown(
-                "**Note:** Due to network-related factors, the page may experience occasional bugs！ If the inpainting results deviate significantly from expectations, consider toggling between task options to refresh the content."  # noqa
-            )
-        # Attention: Due to network-related factors, the page may experience occasional bugs. If the inpainting results deviate significantly from expectations, consider toggling between task options to refresh the content.
+            gr.Markdown("""
+            <div align='center'><font size='5'>
+            <a href='https://powerpaint.github.io/'>Project Page</a> &ensp;
+            <a href='https://arxiv.org/abs/2312.03594/'>Paper</a> &ensp;
+            <a href='https://github.com/open-mmlab/powerpaint'>Code</a></font></div>
+            """)
+
         with gr.Row():
             with gr.Column():
-                gr.Markdown("### Input image and draw mask")
+                gr.Markdown("### Upload image and draw mask")
                 input_image = gr.Image(source="upload", tool="sketch", type="pil")
 
-                task = gr.Radio(
-                    ["text-guided", "object-removal", "shape-guided", "image-outpainting"],
-                    show_label=False,
-                    visible=False,
-                )
-
-                # Text-guided object inpainting
-                with gr.Tab("Text-guided object inpainting") as tab_text_guided:
-                    enable_text_guided = gr.Checkbox(
-                        label="Enable text-guided object inpainting", value=True, interactive=False
-                    )
-                    text_guided_prompt = gr.Textbox(label="Prompt")
-                    text_guided_negative_prompt = gr.Textbox(label="negative_prompt")
-                    tab_text_guided.select(fn=select_tab_text_guided, inputs=None, outputs=task)
-
-                    # currently, we only support controlnet in PowerPaint-v1
-                    if args.version == "ppt-v1":
-                        gr.Markdown("### Controlnet setting")
-                        enable_control = gr.Checkbox(
-                            label="Enable controlnet", info="Enable this if you want to use controlnet"
-                        )
-                        controlnet_conditioning_scale = gr.Slider(
-                            label="controlnet conditioning scale",
-                            minimum=0,
-                            maximum=1,
-                            step=0.05,
-                            value=0.5,
-                        )
-                        control_type = gr.Radio(["canny", "pose", "depth", "hed"], label="Control type")
-                        input_control_image = gr.Image(source="upload", type="pil")
-
-                # Object removal inpainting
-                with gr.Tab("Object removal inpainting") as tab_object_removal:
-                    enable_object_removal = gr.Checkbox(
-                        label="Enable object removal inpainting",
-                        value=True,
-                        info="The recommended configuration for the Guidance Scale is 10 or higher. \
-                        If undesired objects appear in the masked area, \
-                        you can address this by specifically increasing the Guidance Scale.",
-                        interactive=False,
-                    )
-                    removal_prompt = gr.Textbox(label="Prompt")
-                    removal_negative_prompt = gr.Textbox(label="negative_prompt")
-                tab_object_removal.select(fn=select_tab_object_removal, inputs=None, outputs=task)
-
-                # Object image outpainting
-                with gr.Tab("Image outpainting") as tab_image_outpainting:
-                    enable_object_removal = gr.Checkbox(
-                        label="Enable image outpainting",
-                        value=True,
-                        info="The recommended configuration for the Guidance Scale is 10 or higher. \
-                        If unwanted random objects appear in the extended image region, \
-                            you can enhance the cleanliness of the extension area by increasing the Guidance Scale.",
-                        interactive=False,
-                    )
-                    outpaint_prompt = gr.Textbox(label="Outpainting_prompt")
-                    outpaint_negative_prompt = gr.Textbox(label="Outpainting_negative_prompt")
-                    horizontal_expansion_ratio = gr.Slider(
-                        label="horizontal expansion ratio",
-                        minimum=1,
-                        maximum=4,
-                        step=0.05,
-                        value=1,
-                    )
-                    vertical_expansion_ratio = gr.Slider(
-                        label="vertical expansion ratio",
-                        minimum=1,
-                        maximum=4,
-                        step=0.05,
-                        value=1,
-                    )
-                tab_image_outpainting.select(fn=select_tab_image_outpainting, inputs=None, outputs=task)
-
-                # Shape-guided object inpainting
-                with gr.Tab("Shape-guided object inpainting") as tab_shape_guided:
-                    enable_shape_guided = gr.Checkbox(
-                        label="Enable shape-guided object inpainting", value=True, interactive=False
-                    )
-                    shape_guided_prompt = gr.Textbox(label="shape_guided_prompt")
-                    shape_guided_negative_prompt = gr.Textbox(label="shape_guided_negative_prompt")
-                    fitting_degree = gr.Slider(
-                        label="fitting degree",
-                        minimum=0,
-                        maximum=1,
-                        step=0.05,
-                        value=1,
-                    )
-                tab_shape_guided.select(fn=select_tab_shape_guided, inputs=None, outputs=task)
+                gr.Markdown("### Object removal settings")
+                removal_prompt = gr.Textbox(label="Prompt")
+                removal_negative_prompt = gr.Textbox(label="Negative Prompt")
 
                 run_button = gr.Button(label="Run")
+
                 with gr.Accordion("Advanced options", open=False):
                     ddim_steps = gr.Slider(label="Steps", minimum=1, maximum=50, value=45, step=1)
                     scale = gr.Slider(
                         label="Guidance Scale",
-                        info="For object removal and image outpainting, it is recommended to set the value at 10 or above.",
+                        info="Recommended value is 10 or higher.",
                         minimum=0.1,
                         maximum=30.0,
-                        value=7.5,
+                        value=10.0,
                         step=0.1,
                     )
                     seed = gr.Slider(
@@ -695,62 +638,25 @@ if __name__ == "__main__":
                         step=1,
                         randomize=True,
                     )
+
             with gr.Column():
                 gr.Markdown("### Inpainting result")
                 inpaint_result = gr.Gallery(label="Generated images", show_label=False, columns=2)
                 gr.Markdown("### Mask")
                 gallery = gr.Gallery(label="Generated masks", show_label=False, columns=2)
 
-        if args.version == "ppt-v1":
-            run_button.click(
-                fn=controller.infer,
-                inputs=[
-                    input_image,
-                    text_guided_prompt,
-                    text_guided_negative_prompt,
-                    shape_guided_prompt,
-                    shape_guided_negative_prompt,
-                    fitting_degree,
-                    ddim_steps,
-                    scale,
-                    seed,
-                    task,
-                    vertical_expansion_ratio,
-                    horizontal_expansion_ratio,
-                    outpaint_prompt,
-                    outpaint_negative_prompt,
-                    removal_prompt,
-                    removal_negative_prompt,
-                    enable_control,
-                    input_control_image,
-                    control_type,
-                    controlnet_conditioning_scale,
-                ],
-                outputs=[inpaint_result, gallery],
-            )
-        else:
-            run_button.click(
-                fn=controller.infer,
-                inputs=[
-                    input_image,
-                    text_guided_prompt,
-                    text_guided_negative_prompt,
-                    shape_guided_prompt,
-                    shape_guided_negative_prompt,
-                    fitting_degree,
-                    ddim_steps,
-                    scale,
-                    seed,
-                    task,
-                    vertical_expansion_ratio,
-                    horizontal_expansion_ratio,
-                    outpaint_prompt,
-                    outpaint_negative_prompt,
-                    removal_prompt,
-                    removal_negative_prompt,
-                ],
-                outputs=[inpaint_result, gallery],
-            )
+        run_button.click(
+                        fn=controller.infer_objr,
+                        inputs=[
+                            input_image,
+                            removal_prompt,
+                            removal_negative_prompt,
+                            ddim_steps,
+                            scale,
+                            seed,
+                        ],
+                        outputs=[inpaint_result, gallery],
+                    )
 
     demo.queue()
     demo.launch(share=args.share, server_name="0.0.0.0", server_port=args.port)

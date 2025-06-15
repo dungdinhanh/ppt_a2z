@@ -1,0 +1,31 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Debug with Accelerate",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "accelerate.commands.launch",
+      "console": "integratedTerminal",
+      "args": [
+        "launch",
+        "--main_process_port", "29500",              // optional: useful if port conflicts occur
+        "--multi_gpu",
+        "batch_inference_fgrm.py",
+        "--checkpoint_dir", "./checkpoints/ppt-v2_cn",
+        "--version", "ppt-v2",
+        "--output_dir", "/path/to/output",
+        "--ddim_steps", "45",
+        "--scale", "10.0",
+        "--seed", "42",
+        "--batch_size", "1",
+        "--resolution", "840"
+      ],
+      "env": {
+        "PYTHONBREAKPOINT": "pdb.set_trace",
+        "TRANSFORMERS_NO_ADVISORY_WARNINGS": "1"
+      },
+      "justMyCode": false
+    }
+  ]
+}
