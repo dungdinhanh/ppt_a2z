@@ -26,6 +26,34 @@
         "TRANSFORMERS_NO_ADVISORY_WARNINGS": "1"
       },
       "justMyCode": false
+    },
+    {
+      "name": "Debug Fashionpedia Background",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "accelerate.commands.launch",
+      "console": "integratedTerminal",
+      "args": [
+        "launch",
+        "--main_process_port", "29500",
+        "--multi_gpu",
+        "batch_inference_fgrm.py",
+        "--meta", "/home/ubuntu/data/data_2D/fashionpedia_46k/record_fashionpd_hc.csv",
+        "--image_dir", "/home/ubuntu/data/data_2D/fashionpedia_46k/images/",
+        "--mask_dir", "/home/ubuntu/data/data_2D/fashionpedia_46k/images/",
+        "--checkpoint_dir", "./checkpoints/ppt-v2_cn",
+        "--version", "ppt-v2",
+        "--output_dir", "./test/",
+        "--ddim_steps", "45",
+        "--scale", "10.0",
+        "--seed", "42",
+        "--batch_size", "2",
+      ],
+      "env": {
+        "PYTHONBREAKPOINT": "pdb.set_trace",
+        "TRANSFORMERS_NO_ADVISORY_WARNINGS": "1"
+      },
+      "justMyCode": false
     }
   ]
 }

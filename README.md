@@ -87,7 +87,9 @@ python app.py --share
 For the BrushNet-based PowerPaint, you can run the following command:
 ```bash
 # Clone PowerPaint Model
-git lfs clone https://huggingface.co/JunhaoZhuang/PowerPaint_v2/ ./checkpoints/ppt-v2
+mkdir checkpoints
+
+aws s3 sync s3://image-relighting/ppt_a2z/checkpoints/ checkpoints/
 
 python app.py --share --version ppt-v2 --checkpoint_dir checkpoints/ppt-v2
 ```

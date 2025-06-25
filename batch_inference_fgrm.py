@@ -31,6 +31,7 @@ import pandas as pd
 torch.set_grad_enabled(False)
 from torch.utils.data import DataLoader
 import torchvision.transforms.functional as TF
+from powerpaint.utils.data_utils import resize_and_center_crop
 
 def set_seed(seed):
     torch.manual_seed(seed)
@@ -745,10 +746,27 @@ class PowerPaintAugmentedDataset(Dataset):
         # else:
         #     image = image.resize((int(size1 / size2 * 512), 512))
         #     mask = mask.resize((int(size1 / size2 * 512), 512))
-        image = image.resize((self.resolution, self.resolution))
-        mask = mask.resize((self.resolution, self.resolution), Image.LANCZOS)
 
-        
+        # Prev version
+        # image = image.resize((self.resolution, self.resolution))
+        # mask = mask.resize((self.resolution, self.resolution), Image.LANCZOS)
+
+        # width, height = image.size  # (W, H)
+
+        # if width < height:
+        #     # Portrait: resize directly
+        #     image = image.resize((480, 640), resample=Image.BILINEAR)
+        #     mask = mask.resize((480, 640), resample=Image.NEAREST)
+        # else:
+        #     # Landscape: resize, then transpose
+        #     image = image.resize((640, 480), resample=Image.BILINEAR)
+        #     mask = mask.resize((640, 480), resample=Image.NEAREST)
+
+        #     image = image.transpose(method=Image.TRANSPOSE)
+        #     mask = mask.transpose(method=Image.TRANSPOSE)
+        image = resize_and_center_crop(image, 480, 640)
+        mask = resize_and_center_crop(mask, 480, 640, True)
+
 
         # Step 2: Optional outpainting-style expansion
         if self.vertical_expansion_ratio is not None and self.horizontal_expansion_ratio is not None:
@@ -985,7 +1003,7 @@ def main():
                 filename = os.path.splitext(batch["filename"][i])[0] + "_out.png"
                 save_path = os.path.join(args.output_dir, filename)
                 img.save(save_path)
-                print(f"Saved output to {save_path} in rank {accelerator.process_index}")
+                # print(f"Saved output to {save_path} in rank {accelerator.process_index}")
         #________________________________________________
         if count % 10 == 0:
             print(f"Processed {count} batches over {len(dataloader)} in rank {accelerator.process_index} so far.")
