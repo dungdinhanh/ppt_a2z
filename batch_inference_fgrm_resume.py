@@ -486,7 +486,7 @@ class PowerPaintController:
                 width=H,
                 height=W,
                 device=device
-            ).images
+            ).images[0]
 
         # mask_np = np.array(input_image["mask"].convert("RGB"))
         # red = np.array(result).astype("float") * 1
@@ -981,11 +981,10 @@ def main():
             )
 
         
-            for i, img in enumerate(outputs[0]):
+            for i, img in enumerate(outputs):
                 filename = os.path.splitext(batch["filename"][i])[0] + "_out.png"
                 save_path = os.path.join(args.output_dir, filename)
                 img.save(save_path)
-                print(f"Saved output to {save_path} in rank {accelerator.process_index}")
         #________________________________________________
         if count % 10 == 0:
             print(f"Processed {count} batches over {len(dataloader)} in rank {accelerator.process_index} so far.")

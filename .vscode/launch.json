@@ -14,11 +14,11 @@
         "batch_inference_fgrm.py",
         "--checkpoint_dir", "./checkpoints/ppt-v2_cn",
         "--version", "ppt-v2",
-        "--output_dir", "/path/to/output",
+        "--output_dir", "./test/",
         "--ddim_steps", "45",
         "--scale", "10.0",
         "--seed", "42",
-        "--batch_size", "1",
+        "--batch_size", "4",
         "--resolution", "840"
       ],
       "env": {
