@@ -453,8 +453,8 @@ class PowerPaintController:
                 negative_promptB=negative_promptB,
                 image=input_images,
                 mask=input_masks,
-                width=H,
-                height=W,
+                width=W,
+                height=H,
                 guidance_scale=scale,
                 num_inference_steps=ddim_steps,
             ).images[0]
@@ -484,8 +484,8 @@ class PowerPaintController:
                 negative_promptB=negative_promptB,
                 negative_promptU=negative_prompt,
                 guidance_scale=scale,
-                width=H,
-                height=W,
+                width=W,
+                height=H,
                 device=device
             ).images
 
@@ -764,8 +764,8 @@ class PowerPaintAugmentedDataset(Dataset):
 
         #     image = image.transpose(method=Image.TRANSPOSE)
         #     mask = mask.transpose(method=Image.TRANSPOSE)
-        image = resize_and_center_crop(image, 480, 640)
-        mask = resize_and_center_crop(mask, 480, 640, True)
+        image = resize_and_center_crop(image, 824, 1080)
+        mask = resize_and_center_crop(mask, 824, 1080, True)
 
 
         # Step 2: Optional outpainting-style expansion
@@ -991,8 +991,8 @@ def main():
                 scale=args.scale,
                 seed=args.seed,
                 negative_prompt=batch["negative_prompt"],
-                H=args.resolution,
-                W=args.resolution,
+                H=640,
+                W=480,
                 vertical_expansion_ratio=None,
                 horizontal_expansion_ratio=None,
                 device=accelerator.device
