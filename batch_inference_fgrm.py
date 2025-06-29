@@ -991,8 +991,8 @@ def main():
                 scale=args.scale,
                 seed=args.seed,
                 negative_prompt=batch["negative_prompt"],
-                H=640,
-                W=480,
+                H=832,
+                W=640,
                 vertical_expansion_ratio=None,
                 horizontal_expansion_ratio=None,
                 device=accelerator.device
